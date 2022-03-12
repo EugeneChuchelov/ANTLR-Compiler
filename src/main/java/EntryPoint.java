@@ -13,5 +13,7 @@ public class EntryPoint {
         antlr4.LanguageParser parser = new antlr4.LanguageParser(tokens);
         antlr4.LanguageParser.ProgramContext program = parser.program();
         program.accept(new antlr4.LanguageBaseVisitor<>());
+
+        System.out.println(program.toStringTree());
     }
 }

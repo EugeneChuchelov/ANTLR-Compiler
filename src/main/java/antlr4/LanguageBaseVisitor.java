@@ -4,9 +4,10 @@ import exceptions.SemanticException;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.stringtemplate.v4.ST;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  * This class provides an empty implementation of {@link LanguageVisitor},
@@ -17,7 +18,15 @@ import java.util.*;
  *            operations with no return type.
  */
 public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements LanguageVisitor<T> {
-	private Map<String, String> identifiersTypes = new HashMap<>();
+    public static final String RELATE = "relate";
+    public static final String FLOAT = "float";
+    public static final String INT = "int";
+    public static final String BOOL = "bool";
+    public static final String ADD = "add";
+    public static final String MULT = "mult";
+    public static final String UNARY = "unary";
+    private final Map<String, String> identifiersTypes = new HashMap<>();
+
     /**
      * {@inheritDoc}
      *
@@ -59,6 +68,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
      */
     @Override
     public T visitExpression(LanguageParser.ExpressionContext ctx) {
+        getExpressionType(ctx);
         return visitChildren(ctx);
     }
 
@@ -71,8 +81,8 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     @Override
     public T visitDescription(LanguageParser.DescriptionContext ctx) {
         ctx.Identificator().forEach(id -> {
-            if(identifiersTypes.containsKey(id.getText())) {
-                throw new SemanticException("Already defined '" + id.getText() +"' at line " + ctx.start.getLine());
+            if (identifiersTypes.containsKey(id.getText())) {
+                throw new SemanticException("Already defined '" + id.getText() + "' at line " + ctx.start.getLine());
             }
             identifiersTypes.put(id.getText(), ctx.Type().getText());
         });
@@ -111,7 +121,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     public T visitAssignment(LanguageParser.AssignmentContext ctx) {
         String idType = identifiersTypes.get(ctx.Identificator().getText());
         String expType = getExpressionType(ctx.expression());
-        if(!(idType.equals(expType) || (idType.equals("float") && expType.equals("int")))) {
+        if (!(idType.equals(expType) || (idType.equals(FLOAT) && expType.equals(INT)))) {
             throw new SemanticException("Types mismatch at line " + ctx.start.getLine());
         }
         return visitChildren(ctx);
@@ -122,15 +132,15 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
         getTypes(ctx, typesStack);
         while (typesStack.size() > 1) {
             String first = typesStack.pop();
-            if(first.equals("~")) {
+            if (first.equals(UNARY)) {
                 String second = typesStack.pop();
-                if (!second.equals("bool")) {
+                if (!second.equals(BOOL)) {
                     throw new SemanticException("Types mismatch at line " + ctx.start.getLine());
                 }
             } else {
                 String op = typesStack.pop();
                 String second = typesStack.pop();
-                if(!isCompatible(first, op, second)){
+                if (!isCompatible(first, op, second)) {
                     throw new SemanticException("Types mismatch at line " + ctx.start.getLine());
                 } else {
                     typesStack.push(getResultType(first, op, second));
@@ -140,58 +150,58 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
         return typesStack.pop();
     }
 
-    private boolean isCompatible(String first, String op, String second){
-        if(op.equals("relate")) {
-            return !first.equals("bool") && !second.equals("bool");
+    private boolean isCompatible(String first, String op, String second) {
+        if (op.equals(RELATE)) {
+            return !first.equals(BOOL) && !second.equals(BOOL);
         } else {
-            return (first.equals("bool") && second.equals("bool")) || (!first.equals("bool") && !second.equals("bool"));
+            return (first.equals(BOOL) && second.equals(BOOL)) || (!first.equals(BOOL) && !second.equals(BOOL));
         }
     }
 
     private String getResultType(String first, String op, String second) {
-        if(op.equals("relate")) {
-            return "bool";
+        if (op.equals(RELATE)) {
+            return BOOL;
         } else {
-            if (first.equals("int") && second.equals("int")) {
-                return "int";
+            if (first.equals(INT) && second.equals(INT)) {
+                return INT;
             } else {
-                return "float";
+                return FLOAT;
             }
         }
     }
 
-    private void getTypes(ParseTree tree, Stack<String> types){
-        if(tree.getChildCount() == 0) {
-            switch (((TerminalNode)tree).getSymbol().getType()) {
+    private void getTypes(ParseTree tree, Stack<String> types) {
+        if (tree.getChildCount() == 0) {
+            switch (((TerminalNode) tree).getSymbol().getType()) {
                 case LanguageParser.Identificator:
                     String type = identifiersTypes.get(tree.getText());
                     if (type == null) {
-                        throw new SemanticException("Using not defined '" + tree.getText() +"' at line " + ((TerminalNode)tree).getSymbol().getLine());
+                        throw new SemanticException("Using not defined '" + tree.getText() + "' at line " + ((TerminalNode) tree).getSymbol().getLine());
                     }
                     types.push(identifiersTypes.get(tree.getText()));
                     break;
                 case LanguageParser.Number:
                     String number = tree.getText();
                     if (isReal(number)) {
-                        types.push("float");
+                        types.push(FLOAT);
                     } else {
-                        types.push("int");
+                        types.push(INT);
                     }
                     break;
                 case LanguageParser.LogicalConstant:
-                    types.push("bool");
+                    types.push(BOOL);
                     break;
                 case LanguageParser.AdditionOperator:
-                    types.push("add");
+                    types.push(ADD);
                     break;
                 case LanguageParser.MultiplicationOperator:
-                    types.push("mult");
+                    types.push(MULT);
                     break;
                 case LanguageParser.RelationOperator:
-                    types.push("relate");
+                    types.push(RELATE);
                     break;
                 case LanguageParser.UnaryOperator:
-                    types.push("~");
+                    types.push(UNARY);
                     break;
             }
         } else {
@@ -202,11 +212,10 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     }
 
 
-
     private boolean isReal(String s) {
-        if(s.isEmpty()) return false;
-        for(int i = 0; i < s.length(); i++) {
-            if(s.charAt(i) == '.'
+        if (s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '.'
                     || ((s.charAt(i) == 'e' || s.charAt(i) == 'E')
                     && (s.charAt(s.length() - 1) != 'h' && s.charAt(s.length() - 1) != 'H'))) {
                 return true;
@@ -224,7 +233,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     @Override
     public T visitCondition(LanguageParser.ConditionContext ctx) {
         String expType = getExpressionType(ctx.expression());
-        if (!expType.equals("bool")) {
+        if (!expType.equals(BOOL)) {
             throw new SemanticException(ctx.getText());
         }
         return visitChildren(ctx);
@@ -239,7 +248,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     @Override
     public T visitFixedCycle(LanguageParser.FixedCycleContext ctx) {
         String toExpType = getExpressionType(ctx.expression(0));
-        if (!toExpType.equals("bool")) {
+        if (!toExpType.equals(BOOL)) {
             throw new SemanticException(ctx.getText());
         }
         return visitChildren(ctx);
@@ -254,7 +263,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     @Override
     public T visitConditionCycle(LanguageParser.ConditionCycleContext ctx) {
         String expType = getExpressionType(ctx.expression());
-        if (!expType.equals("bool")) {
+        if (!expType.equals(BOOL)) {
             throw new SemanticException(ctx.getText());
         }
         return visitChildren(ctx);
@@ -271,7 +280,7 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
         ctx.Identificator().forEach(id -> {
             String type = identifiersTypes.get(id.getText());
             if (type == null) {
-                throw new SemanticException("Using not defined '" + id.getText() +"' at line " + id.getSymbol().getLine());
+                throw new SemanticException("Using not defined '" + id.getText() + "' at line " + id.getSymbol().getLine());
             }
         });
         return visitChildren(ctx);
