@@ -18,7 +18,7 @@ public class EntryPoint {
         antlr4.LanguageParser.ProgramContext program = parser.program();
         program.accept(new antlr4.LanguageBaseVisitor<>());
 
-        JFrame frame = new JFrame("Antlr AST");
+        JFrame frame = new JFrame("Antlr Tree");
         JPanel panel = new JPanel();
         TreeViewer viewer = new TreeViewer(Arrays.asList(
                 parser.getRuleNames()), program);

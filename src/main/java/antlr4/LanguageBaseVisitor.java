@@ -247,10 +247,6 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
      */
     @Override
     public T visitFixedCycle(LanguageParser.FixedCycleContext ctx) {
-        String toExpType = getExpressionType(ctx.expression(0));
-        if (!toExpType.equals(BOOL)) {
-            throw new SemanticException(ctx.getText());
-        }
         return visitChildren(ctx);
     }
 

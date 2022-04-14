@@ -1,7 +1,7 @@
 grammar Language;
 
-WS: [ \t\r\n]+ -> skip ;
-Comment: '/*' .*? '*/' -> skip;
+WS: [ \t\r]+ -> skip ;
+Comment: '(*' .*? '*)' -> skip;
 
 RelationOperator: 'NE'|'EQ'|'LT'|'LE'|'GT'|'GE';
 AdditionOperator: 'plus'|'min'|'or';
@@ -29,15 +29,15 @@ term: multiplier (MultiplicationOperator multiplier)*;
 operand: term (AdditionOperator term)*;
 expression: operand (RelationOperator operand)*;
 
-description: Identificator (',' Identificator)*? ':' Type ';';
+description: Type Identificator (',' Identificator)*;
 
 operator: (complex|assignment|condition|fixedCycle|conditionCycle|input|output);
-complex: 'begin' operator (';' operator)* 'end';
-assignment: Identificator ':=' expression;
-condition: 'if' '(' expression ')' operator ('else' operator)?;
-fixedCycle: 'for' assignment 'to' expression ('step' expression)? operator 'next';
-conditionCycle: 'while' '(' expression ')' operator;
-input: 'readln' Identificator (',' Identificator)*;
-output: 'writeln' expression (',' expression)*;
+complex: '{' operator (';' operator)* '}';
+assignment: 'let'? Identificator '=' expression;
+condition: 'if' expression 'then' operator ('else' operator)? 'end_else';
+fixedCycle: 'for' '(' expression? ';' expression? ';' expression? ')' operator;
+conditionCycle: 'do' 'while' expression operator 'loop';
+input: 'input' '(' Identificator Identificator* ')';
+output: 'output' '(' expression expression* ')';
 
-program: '{' ((description|operator) ';')+ '}';
+program: ((description|operator) (':'|'\n'))+ 'end';
