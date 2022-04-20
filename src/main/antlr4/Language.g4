@@ -1,14 +1,14 @@
 grammar Language;
 
 WS: [ \t\r\n]+ -> skip ;
-Comment: '/*' .*? '*/' -> skip;
+Comment: '(*' .*? '*)' -> skip;
 
 RelationOperator: 'NE'|'EQ'|'LT'|'LE'|'GT'|'GE';
 AdditionOperator: 'plus'|'min'|'or';
 MultiplicationOperator: 'mult'|'div'|'and';
 UnaryOperator: '~';
 
-Type: 'int'|'float'|'bool';
+Type: '!'|'%'|'$';
 LogicalConstant: 'true'|'false';
 fragment Letter: [a-zA-Z];
 fragment Digit: [0-9];
@@ -32,12 +32,12 @@ expression: operand (RelationOperator operand)*;
 description: Identificator (',' Identificator)*? ':' Type ';';
 
 operator: (complex|assignment|condition|fixedCycle|conditionCycle|input|output);
-complex: 'begin' operator (';' operator)* 'end';
-assignment: Identificator ':=' expression;
-condition: 'if' '(' expression ')' operator ('else' operator)?;
-fixedCycle: 'for' assignment 'to' expression ('step' expression)? operator 'next';
-conditionCycle: 'while' '(' expression ')' operator;
-input: 'readln' Identificator (',' Identificator)*;
-output: 'writeln' expression (',' expression)*;
+complex: '{' operator (';' operator)* '}';
+assignment: 'let'? Identificator '=' expression;
+condition: 'if' expression 'then' operator ('else' operator)? 'end_else';
+fixedCycle: 'for' '(' expression? ';' expression? ';' expression? ')' operator;
+conditionCycle: 'do' 'while' expression operator 'loop';
+input: 'input' '(' Identificator Identificator* ')';
+output: 'output' '(' expression expression* ')';
 
 program: '{' ((description|operator) ';')+ '}';

@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 
 public class EntryPoint {
@@ -18,7 +19,7 @@ public class EntryPoint {
         antlr4.LanguageParser.ProgramContext program = parser.program();
         program.accept(new antlr4.LanguageBaseVisitor<>());
 
-        JFrame frame = new JFrame("Antlr AST");
+        JFrame frame = new JFrame("Tree");
         JPanel panel = new JPanel();
         TreeViewer viewer = new TreeViewer(Arrays.asList(
                 parser.getRuleNames()), program);
