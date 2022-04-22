@@ -19,9 +19,9 @@ import java.util.Stack;
  */
 public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements LanguageVisitor<T> {
     public static final String RELATE = "relate";
-    public static final String FLOAT = "float";
-    public static final String INT = "int";
-    public static final String BOOL = "bool";
+    public static final String FLOAT = "real";
+    public static final String INT = "integer";
+    public static final String BOOL = "boolean";
     public static final String ADD = "add";
     public static final String MULT = "mult";
     public static final String UNARY = "unary";
@@ -247,10 +247,6 @@ public class LanguageBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
      */
     @Override
     public T visitFixedCycle(LanguageParser.FixedCycleContext ctx) {
-        String toExpType = getExpressionType(ctx.expression(0));
-        if (!toExpType.equals(BOOL)) {
-            throw new SemanticException(ctx.getText());
-        }
         return visitChildren(ctx);
     }
 

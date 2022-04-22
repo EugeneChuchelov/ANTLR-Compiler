@@ -18,14 +18,14 @@ public class EntryPoint {
         antlr4.LanguageParser.ProgramContext program = parser.program();
         program.accept(new antlr4.LanguageBaseVisitor<>());
 
-        JFrame frame = new JFrame("Antlr AST");
+        JFrame frame = new JFrame("Program Tree");
         JPanel panel = new JPanel();
         TreeViewer viewer = new TreeViewer(Arrays.asList(
                 parser.getRuleNames()), program);
         panel.add(viewer);
         frame.add(panel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(200,200);
+        frame.setSize(1800,600);
         frame.setVisible(true);
     }
 }
